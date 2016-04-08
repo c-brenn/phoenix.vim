@@ -94,7 +94,10 @@ function! s:cfile(...) abort
   let res = phoenix#singularize(s:findamethod('\%(create table\)\|references','\1'))
   if res != ""|return res.".ex"|endif
 
-  let res = phoenix#underscore(s:findamodule('get ".*", ', '\1'))
+  let res = phoenix#underscore(s:findamodule('\%(get\|resources\|post\|put\|patch\) ".*", ', '\1'))
+  if res != ""|return res.".ex"|endif
+
+  let res = phoenix#underscore(s:check_cw_is_module())
   if res != ""|return res.".ex"|endif
 endfunction
 
@@ -128,6 +131,13 @@ endfunction
 
 function! s:findamodule(func,repl)
   return s:findit('\s*\<\%('.a:func.'\)\s*(\=\s*\(\u\f\+\)\>.\=',a:repl)
+endfunction
+
+function! s:check_cw_is_module()
+  if expand("<cword>") =~ '\u\l\+'
+    return expand("<cword>")
+  endif
+  return ""
 endfunction
 
 function! phoenix#singularize(word)
