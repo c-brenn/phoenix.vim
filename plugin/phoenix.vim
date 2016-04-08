@@ -1,55 +1,41 @@
 " Location:     plugin/projectionist.vim
 " Author:       Conor Brennan<https://github.com/c-brenn>
 " Version:      0.1.0
+
 if exists("g:loaded_phoenix_vim")
   finish
 endif
 let g:loaded_phoenix_vim = 1
 
-function! PhoenixDetect(...) abort
-  if exists('b:phoenix_root')
-    return 1
-  endif
-  let fn = fnamemodify(a:0 ? a:1 : expand('%'), ':p')
-  if fn =~# ':[\/]\{2\}'
-    return 0
-  endif
-  if !isdirectory(fn)
-    let fn = fnamemodify(fn, ':h')
-  endif
-  let file = findfile('mix.exs', escape(fn, ', ').';')
-  if !empty(file) && isdirectory(fnamemodify(file, ':p:h') . '/web')
-    let b:phoenix_root = fnamemodify(file, ':p:h')
-    return 1
-  endif
-endfunction
 
-function!  s:setup() abort
-  if exists('b:loaded_phoenix_projections')
-    return 0
-  endif
+augroup phoenixPluginDetect
+  autocmd!
 
-  call projectionist#append(b:phoenix_root,
-        \   s:phoenix_projections())
-  let b:loaded_phoenix_projections = 1
-endfunction
+  " Setup when openening a file without a filetype
+  autocmd BufNewFile,BufReadPost *
+        \ if empty(&filetype) |
+        \   call phoenix#setup(expand('<amatch>:p')) |
+        \ endif
 
-function! s:phoenix_projections() abort
-  return  {
-        \   "web/channels/*_channel.ex": { "type": "channel" },
-        \   "web/controllers/*_controller.ex": { "type": "controller" }
-        \ }
-endfunction
+  " Setup when launching Vim for a file with any filetype
+  autocmd FileType * call phoenix#setup(expand('%:p'))
+
+  " Setup when launching Vim without a buffer
+  autocmd VimEnter *
+        \ if expand('<amatch>') == '' |
+        \   call phoenix#setup(getcwd()) |
+        \ endif
+augroup END
 
 augroup phoenix_projections
   autocmd!
-  autocmd FileType elixir
-        \ if PhoenixDetect() |
-        \   call s:setup() |
-        \ endif
+  autocmd User ProjectionistDetect call phoenix#setup_projections()
+augroup END
 
-  autocmd User ProjectionistDetect
-        \ if PhoenixDetect(get(g:, 'projectionist_file', '')) |
-        \   call s:setup() |
-        \ endif
+augroup phoenix_path
+  autocmd!
+  autocmd User Phoenix call phoenix#setup_buffer()
+  autocmd User Phoenix
+        \ let &l:path = 'lib/**,web/**,test/**,config/**' . &path |
+        \ let &l:suffixesadd = '.ex,.exs,.html.eex' . &suffixesadd
 augroup END
