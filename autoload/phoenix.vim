@@ -64,11 +64,27 @@ function! phoenix#setup_buffer() abort
 endfunction
 
 function! s:BufferMappings() abort
-  nmap <buffer><silent> <Plug>PhoenixFind       :exe 'find ' . phoenix#cfile('delegate')<CR>
-  nmap <buffer><silent> <Plug>PhoenixSplitFind  :exe 'sfind ' . phoenix#cfile('delegate')<CR>
+  nmap <buffer><silent> <Plug>PhoenixFind       :exe 'find '    . phoenix#cfile('delegate')<CR>
+  nmap <buffer><silent> <Plug>PhoenixSplitFind  :exe 'sfind '   . phoenix#cfile('delegate')<CR>
   nmap <buffer><silent> <Plug>PhoenixTabFind    :exe 'tabfind ' . phoenix#cfile('delegate')<CR>
 
-  nmap <buffer> gf         <Plug>PhoenixFind
+  let pattern = '^$\|_gf(v:count\|[Pp]hoenix\|[Ee]lixir'
+  " gf ==> :find <file>
+  if mapcheck('gf', 'n') =~# pattern
+    nmap <buffer> gf         <Plug>PhoenixFind
+  endif
+  " <C-W>f ==> :sfind <file>
+  if mapcheck('<C-W>f', 'n') =~# pattern
+    nmap <buffer> <C-W>f     <Plug>PhoenixSplitFind
+  endif
+  " <C-W><C-F> ==> :sfind <file>
+  if mapcheck('<C-W><C-F>', 'n') =~# pattern
+    nmap <buffer> <C-W><C-F> <Plug>PhoenixSplitFind
+  endif
+  " <C-W>gf ==> :tabfind file
+  if mapcheck('<C-W>gf', 'n') =~# pattern
+    nmap <buffer> <C-W>gf    <Plug>PhoenixTabFind
+  endif
 endfunction
 
 function! s:BufferCommands() abort

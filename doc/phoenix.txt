@@ -34,6 +34,8 @@ File Under Cursor - gf                                       *phoenix-gf*
 
 The |gf| command normally edits the file specified by the path under
 the cursor. |phoenix.vim| remaps it to take context into account.
+|CTRL-W_f| (open in new window) and |CTRL-W_gf| (open in new tab) are
+also remapped.
 
 Here are some examples of using |gf|, and which files it might bring
 you to. (* indicates cursor position)
