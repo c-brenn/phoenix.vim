@@ -1,13 +1,14 @@
-*phoenix.txt* Plugin for working with Phoenix applications
+*phoenix.vim* Plugin for working with Phoenix applications
 
 |phoenix-introduction|     Introduction
 |phoenix-navigation|       Navigation
 |phoenix-gf|                  File Under Cursor gf
 |phoenix-alternate|           Alternate Files
 |phoenix-type-navigation|     File Type Navigation
+|phoenix-dispatch|         Dispatch Integration
 
 
-INTRODUCTION                                *phoenix* *phoenix-introduction*
+INTRODUCTION                             *phoenix* *phoenix-introduction*
 =====================================================================
 
 Whenever you open a file in a Phoenix project, this plugin sets
@@ -16,7 +17,7 @@ defines several buffer-specific commands for you.
 These commands are aimed to make navigating your Phoenix projects
 quick and easy.
 
-NAVIGATION                                           *phoenix-navigation*
+NAVIGATION                                         *phoenix-navigation*
 =====================================================================
 
 Navigating Phoenix projects efficiently is what this plugin is all
@@ -29,7 +30,8 @@ First off, the standard Phoenix code locations are prepended to
 >
        :find page_controller.ex
 <
-File Under Cursor - gf                                       *phoenix-gf*
+---------------------------------------------------------------------
+File Under Cursor - gf                                     *phoenix-gf*
 ---------------------------------------------------------------------
 
 The |gf| command normally edits the file specified by the path under
@@ -62,7 +64,63 @@ appending |.ex|.  This means that any module in your application that
 follows standard Elixir naming conventions should be found by |gf|,
 regardless of where in the project the file is.
 
-Alternate Files                                       *phoenix-alternate*
+---------------------------------------------------------------------
+Alternate Files                          *phoenix-alternate* *phoenix-:A*
 ---------------------------------------------------------------------
 
+The |:A| command allows you to quickly jump to the "alternate" file of
+the current file. The alternate is usually the test file.These
+alternates are defined below.
 
+Current file    Alternate file ~
+model            unit test
+controller       controller test
+channel          channel test
+view             view test
+template         view
+
+
+
+---------------------------------------------------------------------
+File Type Navigation                          *phoenix-type-navigation*
+---------------------------------------------------------------------
+
+|phoenix.vim| also provides commands for navigating to files of a
+specific type. These commands type an argument (with tab completion).
+
+Each of the commands has variants for splitting, vertical splitting,
+and opening in a new tab.  For |:Emodel|, those variants would be
+|:Smodel|, |:Vmodel| and |:Tmodel|.
+
+                                                *phoenix-:Econtroller*
+|:Econtroller| {name}    Edit the specified controller.
+
+                                                     *phoenix-:Emodel*
+|:Emodel| {name}         Edit the specified model.
+
+                                                   *phoenix-:Echannel*
+|:Echannel| {name}       Edit the specified channel.
+
+                                                      *phoenix-:Eview*
+|:Eview| {name}          Edit the specified view.
+
+                                                      *phoenix-:Etest*
+|:Etest| {name}          Edit the specified test.
+
+                                                    *phoenix-:Erouter*
+|:Erouter|               Edit the router.
+
+                                                       *phoenix-:Emix*
+|:Erouter|               Edit the mix file.
+
+                                                    *phoenix-:Econfig*
+|:Econfig| {name}        Edit the specified config file.
+
+                                                  *phoenix-:Etemplate*
+|:Etemplate| {name}      Edit the specified template.
+
+                                                *phoenix-:Estylesheet*
+|:Estylesheet| {name}    Edit the specified stylesheet.
+
+                                                *phoenix-:Ejavascript*
+|:Ejavascript| {name}    Edit the specified javascript file.

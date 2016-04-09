@@ -33,23 +33,88 @@ endfunction
 function! phoenix#setup_projections() abort
   if exists('b:phoenix_root')
     call projectionist#append(b:phoenix_root, phoenix#projections())
+    for split_type in ['E', 'S', 'V', 'T']
+      exe "command! -buffer -nargs=1 -complete=customlist,phoenix#migrationList " . split_type ."migration execute s:migrationEdit('".split_type."',<q-args>)"
+    endfor
   endif
+endfunction
+
+function! phoenix#migrationList(A, L, P)
+  let migrations = s:relglob("priv/repo/migrations/",'\d\+_*',".exs")
+  let migrations_without_timestamps = map(migrations,'substitute(v:val,"\\d\\+_","", "")')
+  return migrations_without_timestamps
+endfunction
+
+function! s:relglob(path,glob,...)
+  if exists("+shellslash") && ! &shellslash
+    let old_ss = &shellslash
+    let &shellslash = 1
+  endif
+  let path = a:path
+  let suffix = a:0 ? a:1 : ''
+  let full_paths = split(glob(path.a:glob.suffix),"\n")
+  let relative_paths = []
+  for entry in full_paths
+    if suffix == '' && isdirectory(entry) && entry !~ '/$'
+      let entry .= '/'
+    endif
+    let relative_paths += [entry[strlen(path) : -strlen(suffix)-1]]
+  endfor
+  if exists("old_ss")
+    let &shellslash = old_ss
+  endif
+  return relative_paths
+endfunction
+
+function! s:migrationEdit(split_type, file)
+  let possibilities = split(glob('priv/repo/migrations/\d\+_*'.a:file.'.exs'), "\n")
+  if len(possibilities) > 0
+    execute s:split_cmd(a:split_type) . ' ' . possibilities[0]
+  endif
+endfunction
+
+function! s:split_cmd(split_type)
+  if a:split_type == 'E'| return 'e'|endif
+  if a:split_type == 'S'| return 'sp'|endif
+  if a:split_type == 'V'| return 'vsp'|endif
+  if a:split_type == 'T'| return 'tabe'|endif
 endfunction
 
 function! phoenix#projections() abort
   return  {
-        \   "web/controllers/*_controller.ex": { "type": "controller" },
-        \   "web/channels/*_channel.ex": { "type": "channel" },
-        \   "web/templates/**.html.eex": { "type": "template" },
-        \   "web/static/css/*.css": { "type": "stylesheet" },
-        \   "web/static/js/*.js": { "type": "javascript" },
-        \   "web/models/*.ex": { "type": "model" },
-        \   "web/router.ex": { "type": "router" },
-        \   "config/*.exs": { "type": "config" },
-        \   "*": { "start": "mix phoenix.server",
-        \          "console": "iex -S mix",
-        \          "path": "web/**"
-        \        },
+        \  "web/controllers/*_controller.ex": {
+        \     "type": "controller",
+        \     "alternate": "test/controllers/{}_controller_test.exs"
+        \  },
+        \  "web/models/*.ex": {
+        \     "type": "model",
+        \     "alternate": "test/models/{}_test.exs"
+        \  },
+        \  "web/channels/*_channel.ex": {
+        \     "type": "channel",
+        \     "alternate": "test/channels/{}_channel_test.exs"
+        \  },
+        \  "web/views/*_view.ex": {
+        \     "type": "view",
+        \     "alternate": "test/views/{}_view_test.exs"
+        \  },
+        \  "test/*_test.exs": {
+        \     "type": "test",
+        \     "alternate": "web/{}.ex"
+        \  },
+        \  "web/templates/*.html.eex": {
+        \     "type": "template",
+        \     "alternate": "web/views/{dirname|basename}_view.ex"
+        \  },
+        \  "web/static/css/*.css": { "type": "stylesheet" },
+        \  "web/static/js/*.js": { "type": "javascript" },
+        \  "web/router.ex": { "type": "router" },
+        \  "config/*.exs": { "type": "config" },
+        \  "mix.exs":     { "type": "mix" },
+        \  "*": { "start": "mix phoenix.server",
+        \         "console": "iex -S mix",
+        \         "path": "web/**"
+        \  },
         \ }
 endfunction
 
