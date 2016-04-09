@@ -30,6 +30,39 @@ function! phoenix#setup(path) abort
   endif
 endfunction
 
+function! phoenix#generator(...) abort
+  if len(a:000) > 0 && a:1 !~ '\(model\|html\|channel\|json\)'
+    echom 'No generator: ' . a:1 . '. Avaiable generators: model, html, json, channel'
+    return ""
+  endif
+  if len(a:000) < 2
+    echom "Insufficient arguments for generator"
+    return ""
+  endif
+  let old_makeprg = &l:makeprg
+  let old_errorformat = &l:errorformat
+  try
+    let &l:makeprg = "mix phoenix.gen." . a:1 . " " . join(a:000[1:-1], " ")
+    let &l:errorformat = '%# creating %f'
+    noautocmd make!
+  finally
+    let &l:errorformat = old_errorformat
+    let &l:makeprg = old_makeprg
+  endtry
+  if empty(getqflist())
+    return ''
+  else
+    cfirst
+  endif
+endfunction
+
+function! s:generator_complete(A, L, P) abort
+  if a:L =~ '^Pgenerate \(model\|html\|channel\|json\)'
+    return ""
+  endif
+  return "model\nhtml\nchannel\njson"
+endfunction
+
 function! phoenix#setup_projections() abort
   if exists('b:phoenix_root')
     call projectionist#append(b:phoenix_root, phoenix#projections())
@@ -153,7 +186,11 @@ function! s:BufferMappings() abort
 endfunction
 
 function! s:BufferCommands() abort
-  command! -buffer -bar -nargs=? -bang -range PPreview :call s:Preview(<bang>0,<line1>,<q-args>)
+  " Ppreview
+  command! -buffer -bar -nargs=? -bang -range Ppreview :call s:Preview(<bang>0,<line1>,<q-args>)
+  " Generators
+  command! -buffer -nargs=+ -complete=custom,s:generator_complete Pgenerate
+        \ call phoenix#generator(<f-args>)
 endfunction
 
 function! phoenix#cfile(...) abort

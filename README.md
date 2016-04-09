@@ -8,9 +8,10 @@ features (eventually).
 - Project navigation using [projectionist.vim](https://github.com/tpope/vim-projectionist) (`:Emodel` and friends)
 - Jumps using `gf`
   - for example, in an Ecto model: `has_many :users`, with the cursor on `users`, `gf` brings you to `web/models/user.ex`
-- Preview - `:PPreview endpoint` will open `localhost:4000/endpoint` in your browser
+- Generators - run Phoenix generators from within vim `:Pgenerate`
+- Preview - `:Ppreview endpoint` will open `localhost:4000/endpoint` in your browser
 
-and more!
+Check out the documentation `:h phoenix` for the full list of features!
 
 ## Installation
 
@@ -24,6 +25,8 @@ install it too.
 Plug 'c-brenn/phoenix.vim'
 Plug 'tpope/vim-projectionist' " required for navigation features
 ```
+
+Make sure to have this plugin before projectionist in your vimrc.
 
 ## More Features To Come
 

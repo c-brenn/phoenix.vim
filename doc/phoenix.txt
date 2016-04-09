@@ -5,7 +5,7 @@
 |phoenix-gf|                  File Under Cursor gf
 |phoenix-alternate|           Alternate Files
 |phoenix-type-navigation|     File Type Navigation
-|phoenix-dispatch|         Dispatch Integration
+|phoenix-generators|       Generators
 
 
 INTRODUCTION                             *phoenix* *phoenix-introduction*
@@ -49,7 +49,7 @@ you to. (* indicates cursor position)
      has_many :com*ments
 <     web/models/comment.ex ~
 >
-     channel "rooms:*", MyApp.R*oomChannel
+     channel "rooms:lobby", MyApp.R*oomChannel
 <     web/channels/room_channel.ex ~
 >
      alias MyApp.F*oo
@@ -124,3 +124,36 @@ and opening in a new tab.  For |:Emodel|, those variants would be
 
                                                 *phoenix-:Ejavascript*
 |:Ejavascript| {name}    Edit the specified javascript file.
+
+
+GENERATORS                      *phoenix-generators* *phoenix-:Pgenerate*
+=====================================================================
+
+|phoenix.vim| defines the |:Pgenerate| command which allows you to run
+'mix phoenix.gen...' from within vim (with basic tab completion).
+|:Pgenerate| will load the generated files in the quickfix list and
+jump to 'cfirst'.
+
+>
+      :Pgenerate html User users email:string
+<      !mix phoenix.gen.html User users email:string! ~
+
+|:Pgenerate| will tab complete for the support generators:
+
+>
+      :Pgenerate h<tab>
+<      :Pgenerate html ~
+
+
+The supported generators are: model, html, json and channel.
+
+
+
+---------------------------------------------------------------------
+---------------------------------------------------------------------
+                                                     *phoenix-license*
+
+Copyright (c) Conor Brennan.  Distributed under the same terms as Vim
+itself.  See |license|.
+
+ vim:tw=70:ts=8:ft=help:norl:
