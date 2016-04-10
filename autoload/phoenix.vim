@@ -30,38 +30,114 @@ function! phoenix#setup(path) abort
   endif
 endfunction
 
-function! phoenix#generator(...) abort
-  if len(a:000) > 0 && a:1 !~ '\(model\|html\|channel\|json\)'
-    echom 'No generator: ' . a:1 . '. Avaiable generators: model, html, json, channel'
-    return ""
-  endif
-  if len(a:000) < 2
-    echom "Insufficient arguments for generator"
-    return ""
-  endif
-  let old_makeprg = &l:makeprg
-  let old_errorformat = &l:errorformat
-  try
-    let &l:makeprg = "mix phoenix.gen." . a:1 . " " . join(a:000[1:-1], " ")
-    let &l:errorformat = '%# creating %f'
-    noautocmd make!
-  finally
-    let &l:errorformat = old_errorformat
-    let &l:makeprg = old_makeprg
-  endtry
-  if empty(getqflist())
+" {{{ Buffer Setup
+
+function! phoenix#setup_buffer() abort
+  if !exists('b:phoenix_root')
     return ''
-  else
-    cfirst
+  endif
+
+  call s:BufferMappings()
+  call s:BufferCommands()
+endfunction
+
+function! s:BufferMappings() abort
+  nmap <buffer><silent> <Plug>PhoenixFind       :exe 'find '    . phoenix#cfile('delegate')<CR>
+  nmap <buffer><silent> <Plug>PhoenixSplitFind  :exe 'sfind '   . phoenix#cfile('delegate')<CR>
+  nmap <buffer><silent> <Plug>PhoenixTabFind    :exe 'tabfind ' . phoenix#cfile('delegate')<CR>
+
+  let pattern = '^$\|_gf(v:count\|[Pp]hoenix\|[Ee]lixir'
+  " gf ==> :find <file>
+  if mapcheck('gf', 'n') =~# pattern
+    nmap <buffer> gf         <Plug>PhoenixFind
+  endif
+  " <C-W>f ==> :sfind <file>
+  if mapcheck('<C-W>f', 'n') =~# pattern
+    nmap <buffer> <C-W>f     <Plug>PhoenixSplitFind
+  endif
+  " <C-W><C-F> ==> :sfind <file>
+  if mapcheck('<C-W><C-F>', 'n') =~# pattern
+    nmap <buffer> <C-W><C-F> <Plug>PhoenixSplitFind
+  endif
+  " <C-W>gf ==> :tabfind file
+  if mapcheck('<C-W>gf', 'n') =~# pattern
+    nmap <buffer> <C-W>gf    <Plug>PhoenixTabFind
   endif
 endfunction
 
-function! s:generator_complete(A, L, P) abort
-  if a:L =~ '^Pgenerate \(model\|html\|channel\|json\)'
+function! s:BufferCommands() abort
+  " Ppreview
+  command! -buffer -bar -nargs=? -bang -range Ppreview :call s:Preview(<bang>0,<line1>,<q-args>)
+  " Generators
+  command! -buffer -nargs=+ -complete=custom,s:generator_complete Pgenerate
+        \ call phoenix#generator(<f-args>)
+endfunction
+
+" }}}
+
+" {{{ gf
+
+function! phoenix#cfile(...) abort
+  let cfile = s:cfile()
+  return cfile
+endfunction
+
+function! s:cfile(...) abort
+  if filereadable(expand("<cfile>"))
+    return expand("<cfile>")
+  endif
+
+  let res = s:findamethod('belongs_to\|has_one','\1.ex')
+  if res != ""|return res|endif
+
+  let res = phoenix#singularize(s:findamethod('has_many','\1'))
+  if res != ""|return res.".ex"|endif
+
+  let res = phoenix#singularize(s:findamethod('\%(create table\)\|references','\1'))
+  if res != ""|return res.".ex"|endif
+
+  let res = phoenix#underscore(s:findamodule('\%(get\|resources\|post\|put\|patch\) ".*", ', '\1'))
+  if res != ""|return res.".ex"|endif
+
+  let res = phoenix#underscore(s:findamodule('\%(\a\+\.\)\+', '\1'))
+  if res != ""|return res.".ex"|endif
+endfunction
+
+function! s:matchcursor(pat)
+  let line = getline(".")
+  let lastend = 0
+  while lastend >= 0
+    let beg = match(line,'\C'.a:pat,lastend)
+    let end = matchend(line,'\C'.a:pat,lastend)
+    if beg < col(".") && end >= col(".")
+      return matchstr(line,'\C'.a:pat,lastend)
+    endif
+    let lastend = end
+  endwhile
+  return ""
+endfunction
+
+function! s:findit(pat,repl)
+  let res = s:matchcursor(a:pat)
+  if res != ""
+    return substitute(res,'\C'.a:pat,a:repl,'')
+  else
     return ""
   endif
-  return "model\nhtml\nchannel\njson"
 endfunction
+
+
+function! s:findamethod(func,repl)
+  return s:findit('\s*\<\%('.a:func.'\)\s*(\=\s*[@:'."'".'"]\(\f\+\)\>.\=',a:repl)
+endfunction
+
+function! s:findamodule(func,repl)
+  return s:findit('\s*\<\%('.a:func.'\)\s*(\=\s*\(\u\f\+\)\>.\=',a:repl)
+endfunction
+
+" }}}
+
+" {{{ Projections
 
 function! phoenix#setup_projections() abort
   if exists('b:phoenix_root')
@@ -151,105 +227,48 @@ function! phoenix#projections() abort
         \ }
 endfunction
 
+" }}}
 
-function! phoenix#setup_buffer() abort
-  if !exists('b:phoenix_root')
-    return ''
-  endif
+" {{{ Generators
 
-  call s:BufferMappings()
-  call s:BufferCommands()
-endfunction
-
-function! s:BufferMappings() abort
-  nmap <buffer><silent> <Plug>PhoenixFind       :exe 'find '    . phoenix#cfile('delegate')<CR>
-  nmap <buffer><silent> <Plug>PhoenixSplitFind  :exe 'sfind '   . phoenix#cfile('delegate')<CR>
-  nmap <buffer><silent> <Plug>PhoenixTabFind    :exe 'tabfind ' . phoenix#cfile('delegate')<CR>
-
-  let pattern = '^$\|_gf(v:count\|[Pp]hoenix\|[Ee]lixir'
-  " gf ==> :find <file>
-  if mapcheck('gf', 'n') =~# pattern
-    nmap <buffer> gf         <Plug>PhoenixFind
-  endif
-  " <C-W>f ==> :sfind <file>
-  if mapcheck('<C-W>f', 'n') =~# pattern
-    nmap <buffer> <C-W>f     <Plug>PhoenixSplitFind
-  endif
-  " <C-W><C-F> ==> :sfind <file>
-  if mapcheck('<C-W><C-F>', 'n') =~# pattern
-    nmap <buffer> <C-W><C-F> <Plug>PhoenixSplitFind
-  endif
-  " <C-W>gf ==> :tabfind file
-  if mapcheck('<C-W>gf', 'n') =~# pattern
-    nmap <buffer> <C-W>gf    <Plug>PhoenixTabFind
-  endif
-endfunction
-
-function! s:BufferCommands() abort
-  " Ppreview
-  command! -buffer -bar -nargs=? -bang -range Ppreview :call s:Preview(<bang>0,<line1>,<q-args>)
-  " Generators
-  command! -buffer -nargs=+ -complete=custom,s:generator_complete Pgenerate
-        \ call phoenix#generator(<f-args>)
-endfunction
-
-function! phoenix#cfile(...) abort
-  let cfile = s:cfile()
-  return cfile
-endfunction
-
-function! s:cfile(...) abort
-  if filereadable(expand("<cfile>"))
-    return expand("<cfile>")
-  endif
-
-  let res = s:findamethod('belongs_to\|has_one','\1.ex')
-  if res != ""|return res|endif
-
-  let res = phoenix#singularize(s:findamethod('has_many','\1'))
-  if res != ""|return res.".ex"|endif
-
-  let res = phoenix#singularize(s:findamethod('\%(create table\)\|references','\1'))
-  if res != ""|return res.".ex"|endif
-
-  let res = phoenix#underscore(s:findamodule('\%(get\|resources\|post\|put\|patch\) ".*", ', '\1'))
-  if res != ""|return res.".ex"|endif
-
-  let res = phoenix#underscore(s:findamodule('\%(\a\+\.\)\+', '\1'))
-  if res != ""|return res.".ex"|endif
-endfunction
-
-function! s:matchcursor(pat)
-  let line = getline(".")
-  let lastend = 0
-  while lastend >= 0
-    let beg = match(line,'\C'.a:pat,lastend)
-    let end = matchend(line,'\C'.a:pat,lastend)
-    if beg < col(".") && end >= col(".")
-      return matchstr(line,'\C'.a:pat,lastend)
-    endif
-    let lastend = end
-  endwhile
-  return ""
-endfunction
-
-function! s:findit(pat,repl)
-  let res = s:matchcursor(a:pat)
-  if res != ""
-    return substitute(res,'\C'.a:pat,a:repl,'')
-  else
+function! phoenix#generator(...) abort
+  if len(a:000) > 0 && a:1 !~ '\(model\|html\|channel\|json\)'
+    echom 'No generator: ' . a:1 . '. Avaiable generators: model, html, json, channel'
     return ""
   endif
+  if len(a:000) < 2
+    echom "Insufficient arguments for generator"
+    return ""
+  endif
+  let old_makeprg = &l:makeprg
+  let old_errorformat = &l:errorformat
+  try
+    let &l:makeprg = "mix phoenix.gen." . a:1 . " " . join(a:000[1:-1], " ")
+    let &l:errorformat = '%# creating %f'
+    noautocmd make!
+  finally
+    let &l:errorformat = old_errorformat
+    let &l:makeprg = old_makeprg
+  endtry
+  if empty(getqflist())
+    return ''
+  else
+    cfirst
+  endif
 endfunction
 
-
-function! s:findamethod(func,repl)
-  return s:findit('\s*\<\%('.a:func.'\)\s*(\=\s*[@:'."'".'"]\(\f\+\)\>.\=',a:repl)
+function! s:generator_complete(A, L, P) abort
+  if a:L =~ '^Pgenerate \(model\|html\|channel\|json\)'
+    return ""
+  endif
+  return "model\nhtml\nchannel\njson"
 endfunction
 
-function! s:findamodule(func,repl)
-  return s:findit('\s*\<\%('.a:func.'\)\s*(\=\s*\(\u\f\+\)\>.\=',a:repl)
-endfunction
+" }}}
+
+
+
+" {{{ Helpers
 
 function! phoenix#singularize(word)
   let word = a:word
@@ -286,6 +305,10 @@ endfunction
 function! s:gsub(str,pat,rep)
   return substitute(a:str,'\v\C'.a:pat,a:rep,'g')
 endfunction
+
+" }}}
+
+" {{{ Preview
 
 function! s:Preview(bang, lnum, uri)
   let binding = '0.0.0.0:4000'
@@ -330,3 +353,10 @@ function! s:initOpenURL() abort
     endif
   endif
 endfunction
+
+" }}}
+
+" {{{ Server
+
+" }}}
+
