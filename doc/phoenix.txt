@@ -174,13 +174,34 @@ jump to 'cfirst'.
 
 The supported generators are: model, html, json and channel.
 
-SERVER                                  *phoenix-server* *phoenix-:Start*
+SERVER                                *phoenix-server* *phoenix-:Pserver*
 =====================================================================
 
-You can start up 'mix phoenix.server' using |:Start|. This functionality is
-provided by tpope's fantastic plugin 'dispatch' which can be found here:
+You can start up 'mix phoenix.server' using |:Pserver|. For Neovim
+users, the server will open in a new terminal window.
+
+The size and split of the window can be changed:
+
+>
+ let g:phoenix_server_size = 15
+
+ let g:phoenix_server_split = 'split'
+<
+
+|g:phoenix_server_split| can take the values: 'split' for a horizontal
+split (default) or 'vsplit' for a vertical split.
+
+|:Pserver| will switch back to the server buffer if it is not the
+current buffer. If it is the current buffer, it will hide it.
+
+For Vim users this functionality is provided by tpope's fantastic
+plugin 'dispatch' which can be found here:
 
 https://github.com/tpope/vim-dispatch
+
+Unfortunately, Vim users won't get the customisability or the
+switching/hiding functionality. I would encourage Vim users to
+consider switching to Neovim if circumstances allow.
 
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------

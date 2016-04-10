@@ -67,11 +67,14 @@ function! s:BufferMappings() abort
 endfunction
 
 function! s:BufferCommands() abort
-  " Ppreview
-  command! -buffer -bar -nargs=? -bang -range Ppreview :call s:Preview(<bang>0,<line1>,<q-args>)
-  " Generators
-  command! -buffer -nargs=+ -complete=custom,s:generator_complete Pgenerate
+  " Pserver
+  command! -nargs=0 Pserver call phoenix#open_server()
+  command! -nargs=0 PserverHide call phoenix#hide_server()
+  " Pgenerate
+  command! -nargs=+ -complete=custom,s:generator_complete Pgenerate
         \ call phoenix#generator(<f-args>)
+  " Ppreview
+  command! -bar -nargs=? -bang -range Ppreview :call s:Preview(<bang>0,<line1>,<q-args>)
 endfunction
 
 " }}}
@@ -409,3 +412,63 @@ endfunction
 
 " }}}
 
+" {{{ Server
+
+if !exists('g:phoenix_server_size')
+  let g:phoenix_server_size = 15
+endif
+if !exists('g:phoenix_server_split')
+  let g:phoenix_server_split = "split"
+endif
+
+function! s:server_open_cmd()
+  return "botright " . g:phoenix_server_size . g:phoenix_server_split
+endfunction
+
+function! s:server_buffer_exists()
+  return exists('s:phoenix_server_buffer') && bufexists(s:phoenix_server_buffer)
+endfunction
+
+function! phoenix#open_server()
+  if has('nvim')
+    if s:server_buffer_exists()
+      let winno = bufwinnr(s:phoenix_server_buffer)
+      " if the Pserver buffer is the current buffer, hide it
+      if s:phoenix_server_buffer == bufnr("%")
+        call phoenix#hide_server()
+
+        " if the buffer is in an open window, switch to it
+      elseif winno != -1
+        exec winno . "wincmd w"
+        startinsert
+
+        " otherwise the buffer is hidden, open it in a new window
+      else
+        exec s:server_open_cmd() . " +buffer" . s:phoenix_server_buffer
+        startinsert
+      endif
+    else
+      " no Pserver buffer exists, open a new one
+      exec s:server_open_cmd()
+      terminal mix phoenix.server
+      let s:phoenix_server_buffer = bufnr("%")
+      startinsert
+    endif
+  elseif exists(':Start')
+    exec "Start"
+  else
+    echom "Pserver requires either Neovim or Dispatch"
+  endif
+endfunction
+
+function! phoenix#hide_server()
+  if exists('s:phoenix_server_buffer')
+    " only hide the window if it is open
+    if bufwinnr(s:phoenix_server_buffer) != -1
+      " Neovim has :{winnr}hide whereas Vim doesn't
+      exec bufwinnr(s:phoenix_server_buffer) . "hide"
+    endif
+  endif
+endfunction
+
+" }}}

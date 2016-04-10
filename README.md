@@ -8,9 +8,9 @@ features (eventually).
 | Feature | Description |
 | ------- | ------------|
 | Projectionist Navigation | Navigation using [Projectionist][projectionist] - `:Emodel` and friends |
-| Jumps | Use words under the cursor to jump to files with `gf`. For example, in an Ecto model: `has_many :users`, with the cursor on `users`, `gf` brings you to `web/models/user.ex` |
+| Jumps | Use the word under the cursor to jump to files with `gf`. For example, in an Ecto model: `has_many :users`, with the cursor on `users`, `gf` brings you to `web/models/user.ex` |
 | Generators | Run Phoenix generators from within vim `:Pgenerate model Foo foos bar:string`
-| [Dispatch][dispatch] Integration | `:Start` up `mix phoenix.server` using [Dispatch][dispatch]|
+| Server | `:Pserver` runs `mix phoenix.server` - in a `term` for Neovim users or with [dispatch][dispatch] for Vim users|
 | Preview | `:Ppreview` endpoints in your browser
 
 Check out the documentation `:h phoenix` for the full list of features!
