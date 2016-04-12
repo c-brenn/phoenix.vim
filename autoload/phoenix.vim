@@ -19,6 +19,7 @@ function! phoenix#detect(...) abort
   let file = findfile('mix.exs', escape(fn, ', ').';')
   if !empty(file) && isdirectory(fnamemodify(file, ':p:h') . '/web')
     let b:phoenix_root = fnamemodify(file, ':p:h')
+    let b:phoenix_project_name = phoenix#camelize(fnamemodify(b:phoenix_root, ':t'))
     return 1
   endif
 endfunction
@@ -145,6 +146,7 @@ function! phoenix#setup_projections() abort
     for split_type in ['E', 'S', 'V', 'T']
       exe "command! -buffer -nargs=1 -complete=customlist,phoenix#migrationList " . split_type ."migration execute s:migrationEdit('".split_type."',<q-args>)"
     endfor
+    call phoenix#setup_custom_transformations()
   endif
 endfunction
 
@@ -189,27 +191,73 @@ function! s:split_cmd(split_type)
   if a:split_type == 'T'| return 'tabe'|endif
 endfunction
 
+function! s:template_for(lowercase, camelcase)
+  return [s:module_def(a:lowercase, a:camelcase)]  + s:module_content(a:lowercase, a:camelcase) + ['', 'end']
+endfunction
+
+function! s:module_def(lowercase, camelcase)
+  if a:lowercase =~ '\(view\|controller\|channel\)'
+    return 'defmodule '.b:phoenix_project_name.'.{camelcase}'.a:camelcase.' do'
+  elseif a:lowercase == 'model'
+    return 'defmodule '.b:phoenix_project_name.'.{camelcase} do'
+  elseif a:lowercase == 'test'
+    return 'defmodule '.b:phoenix_project_name.'.{basename|camelcase}'.a:camelcase.' do'
+  end
+endfunction
+
+function! s:module_content(lowercase, camelcase)
+  if a:lowercase =~ '\(view\|controller\|channel\)'
+    return ['  use '.b:phoenix_project_name.'.Web, :'.a:lowercase]
+  elseif a:lowercase == 'model'
+    return ['  use '.b:phoenix_project_name.'.Web, :'.a:lowercase,
+          \ '',
+          \ '  schema "{}s" do',
+          \ '',
+          \ '  end',
+          \]
+  elseif a:lowercase == 'test'
+    return ['  use '.b:phoenix_project_name.'.{testcase}']
+  endif
+endfunction
+
+function! phoenix#setup_custom_transformations()
+  function! g:projectionist_transformations.testcase(input, o) abort
+    if a:input =~ '\(views\|controllers\)/\a\+'
+      return 'ConnCase'
+    elseif a:input =~ 'models/\a\+'
+      return 'ModelCase'
+    elseif a:input =~ 'channels/\a\+'
+      return 'ChannelCase'
+    endif
+  endfunction
+endfunction
+
 function! phoenix#projections() abort
   return  {
         \  "web/controllers/*_controller.ex": {
         \     "type": "controller",
-        \     "alternate": "test/controllers/{}_controller_test.exs"
+        \     "alternate": "test/controllers/{}_controller_test.exs",
+        \     "template": s:template_for('controller', 'Controller')
         \  },
         \  "web/models/*.ex": {
         \     "type": "model",
-        \     "alternate": "test/models/{}_test.exs"
+        \     "alternate": "test/models/{}_test.exs",
+        \     "template": s:template_for('model', 'Model')
         \  },
         \  "web/channels/*_channel.ex": {
         \     "type": "channel",
-        \     "alternate": "test/channels/{}_channel_test.exs"
+        \     "alternate": "test/channels/{}_channel_test.exs",
+        \     "template": s:template_for('channel', 'Channel')
         \  },
         \  "web/views/*_view.ex": {
         \     "type": "view",
-        \     "alternate": "test/views/{}_view_test.exs"
+        \     "alternate": "test/views/{}_view_test.exs",
+        \     "template": s:template_for('view', 'View')
         \  },
         \  "test/*_test.exs": {
         \     "type": "test",
-        \     "alternate": "web/{}.ex"
+        \     "alternate": "web/{}.ex",
+        \     "template": s:template_for('test', 'Test')
         \  },
         \  "web/templates/*.html.eex": {
         \     "type": "template",
@@ -269,6 +317,12 @@ endfunction
 
 
 " {{{ Helpers
+"
+function! phoenix#camelize(str)
+  let str = s:gsub(a:str,'/(.=)','::\u\1')
+  let str = s:gsub(str,'%([_-]|<)(.)','\u\1')
+  return str
+endfunction
 
 function! phoenix#singularize(word)
   let word = a:word
@@ -353,10 +407,6 @@ function! s:initOpenURL() abort
     endif
   endif
 endfunction
-
-" }}}
-
-" {{{ Server
 
 " }}}
 

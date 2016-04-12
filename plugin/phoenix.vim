@@ -11,20 +11,15 @@ let g:loaded_phoenix_vim = 1
 augroup phoenixPluginDetect
   autocmd!
 
-  " Setup when openening a file without a filetype
   autocmd BufNewFile,BufReadPost *
-        \ if empty(&filetype) |
-        \   call phoenix#setup(expand('<amatch>:p')) |
+        \ if phoenix#detect(expand("<afile>:p")) && empty(&filetype) |
+        \   call phoenix#setup_buffer() |
         \ endif
-
-  " Setup when launching Vim for a file with any filetype
-  autocmd FileType * call phoenix#setup(expand('%:p'))
-
-  " Setup when launching Vim without a buffer
   autocmd VimEnter *
-        \ if expand('<amatch>') == '' |
-        \   call phoenix#setup(getcwd()) |
+        \ if empty(expand("<amatch>")) && phoenix#detect(getcwd()) |
+        \   call phoenix#setup_buffer() |
         \ endif
+  autocmd FileType * if phoenix#detect() | call phoenix#setup_buffer() | endif
 augroup END
 
 augroup phoenix_projections
