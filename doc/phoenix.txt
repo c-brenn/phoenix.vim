@@ -5,7 +5,9 @@
 |phoenix-gf|                  File Under Cursor gf
 |phoenix-alternate|           Alternate Files
 |phoenix-type-navigation|     File Type Navigation
+|phoenix-templates|           Templates
 |phoenix-generators|       Generators
+|phoenix-server|           Server
 
 
 INTRODUCTION                             *phoenix* *phoenix-introduction*
@@ -126,6 +128,31 @@ and opening in a new tab.  For |:Emodel|, those variants would be
 |:Ejavascript| {name}    Edit the specified javascript file.
 
 
+---------------------------------------------------------------------
+Templates                                           *phoenix-templates*
+---------------------------------------------------------------------
+
+You can use |:A| or |:Emodel| (and their friends/variations) to
+navigate to a file that does not yet exists. |phoenix.vim| allows you
+to create these files from templates it provides.
+
+For example, if you wanted to create a new controller:
+
+    :Econtroller foo ~
+
+This will open a new buffer: `web/controllers/foo_controller.ex`
+
+>
+ defmodule MyApp.FooController do
+   use MyApp.Web, :controller
+>
+ end
+<
+
+|phoenix.vim| provides templates for:
+  models, views, controllers, channels and tests
+
+
 GENERATORS                      *phoenix-generators* *phoenix-:Pgenerate*
 =====================================================================
 
@@ -147,7 +174,13 @@ jump to 'cfirst'.
 
 The supported generators are: model, html, json and channel.
 
+SERVER                                  *phoenix-server* *phoenix-:Start*
+=====================================================================
 
+You can start up 'mix phoenix.server' using |:Start|. This functionality is
+provided by tpope's fantastic plugin 'dispatch' which can be found here:
+
+https://github.com/tpope/vim-dispatch
 
 ---------------------------------------------------------------------
 ---------------------------------------------------------------------

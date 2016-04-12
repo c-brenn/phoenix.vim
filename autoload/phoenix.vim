@@ -269,7 +269,6 @@ function! phoenix#projections() abort
         \  "config/*.exs": { "type": "config" },
         \  "mix.exs":     { "type": "mix" },
         \  "*": { "start": "mix phoenix.server",
-        \         "console": "iex -S mix",
         \         "path": "web/**"
         \  },
         \ }
