@@ -24,6 +24,7 @@ augroup END
 
 augroup phoenix_projections
   autocmd!
+  autocmd User ProjectionistDetect call phoenix#setup()
   autocmd User ProjectionistDetect call phoenix#setup_projections()
 augroup END
 
