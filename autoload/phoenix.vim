@@ -24,8 +24,8 @@ function! phoenix#detect(...) abort
   endif
 endfunction
 
-function! phoenix#setup(path) abort
-  call phoenix#detect(a:path)
+function! phoenix#setup(...) abort
+  call call('phoenix#detect', a:000)
   if exists('b:phoenix_root')
     doautocmd User Phoenix
   endif
